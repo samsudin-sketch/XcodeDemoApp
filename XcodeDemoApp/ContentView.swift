@@ -9,13 +9,35 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-           
-            Text("project updated")
+        NavigationStack {
+            VStack (spacing : 20) {
+                Text("Första Vyn")
+                    .font(.title)
+                
+                NavigationLink(destination: RecipesListView()) {
+                    Text("Gå till nästa vy")
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    
+                }
+            }
+            .navigationTitle("Hem")
         }
-        .padding()
     }
 }
+
+struct RecipesListView: View { // ej klar
+    var body: some View {
+        Text("Detta är receptlistan")
+            .font(.title)
+            .navigationTitle("Recept")
+    }
+}
+
+
+
 
 #Preview {
     ContentView()
