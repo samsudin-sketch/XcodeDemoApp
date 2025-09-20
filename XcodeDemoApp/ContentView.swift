@@ -33,12 +33,13 @@ struct ContentView: View {
 struct RecipesListView: View { // ej klar
     let dummyRecipes = [//dummyRecipes är en array (lista) av Recipe-objekt.
         Recipe(id: 1, title: "Pizza", author: "Anna", description: "Tomat och ost"),
-        Recipe(id: 2, title: "Pasta", author: "Erik", description: "Med gräddsås")
+        Recipe(id: 2, title: "Pasta", author: "Erik", description: "Med gräddsås"),
+        Recipe(id: 3, title: "Sallad", author: "Lina", description: "Fräsch och grön")
     ]
     
     
     var body: some View {
-        VStack {//spacing?
+        VStack (spacing: 20){//space mellan sakerna i den vertikala satsen
             Text("Recept")
                 .font(.largeTitle)
                 .bold()
@@ -51,11 +52,20 @@ struct RecipesListView: View { // ej klar
                             .foregroundColor(.white)
                         Text("av \(recipe.author)")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.white.opacity(0.8))
                     }
+                    .padding()//space mellan texten i knappen och knappens ytterkant
+                    .frame(maxWidth: .infinity, alignment: .leading) //knappbredd
+                    .background(Color.blue)
+                    .cornerRadius(10)//rundar av hörnen
+                    .shadow(radius: 3) // skugga runt knappen
                 }
             }
+            
+            Spacer()//flyttar allt uppåt
         }
+        .padding()//space "runt om" recept och knappar
+        .navigationTitle(Text("Recept"))
     }
 }
 
@@ -87,9 +97,9 @@ struct RecipeDetailView: View {
             Text("av \(recipe.author)")
                 .font(.title2)
                 .foregroundColor(.gray)
-            Divider()
+            Divider()//skapar en tunn linje mellan
             Text(recipe.description)
-                .padding(.top)
+                .padding(.top)//padding endast på en angiven sida
         }
         .navigationTitle("Detaljer")
     }
