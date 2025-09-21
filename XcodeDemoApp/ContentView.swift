@@ -30,11 +30,11 @@ struct ContentView: View {
 }
 
 //"Andra" Vyn
-struct RecipesListView: View { // ej klar
+struct RecipesListView: View {
     let dummyRecipes = [//dummyRecipes är en array (lista) av Recipe-objekt.
-        Recipe(id: 1, title: "Pizza", author: "Anna", description: "Tomat och ost"),
-        Recipe(id: 2, title: "Pasta", author: "Erik", description: "Med gräddsås"),
-        Recipe(id: 3, title: "Sallad", author: "Lina", description: "Fräsch och grön")
+        Recipe(id: UUID(), title: "Pizza", author: "Anna", description: "Tomat och ost"),
+        Recipe(id: UUID(), title: "Pasta", author: "Erik", description: "Med gräddsås"),
+        Recipe(id: UUID(), title: "Sallad", author: "Lina", description: "Fräsch och grön")
     ]
     
     
@@ -74,7 +74,7 @@ struct RecipesListView: View { // ej klar
 //gör en modell (recipe)
 
 struct Recipe: Identifiable {//Identifiable möjliggör att användning i ForEach
-    let id: Int
+    let id: UUID //ändrat från int till uuid
     let title: String
     let author: String
     let description: String
