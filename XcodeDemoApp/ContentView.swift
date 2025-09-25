@@ -32,11 +32,7 @@ struct ContentView: View {
 //"Andra" Vyn
 struct RecipesListView: View {
     
-    @State private var recipes = [       //krävs @State för att kunna ändra listan
-        Recipe(id: UUID(), title: "Pizza", author: "Anna", description: "Tomat och ost"),
-        Recipe(id: UUID(), title: "Pasta", author: "Erik", description: "Med gräddsås"),
-        Recipe(id: UUID(), title: "Sallad", author: "Lina", description: "Fräsch och grön")
-    ]
+    @State private var recipes: [Recipe] = [] //kör nu tom array i början istället
     
     var body: some View {
         VStack (spacing: 20){//space mellan sakerna i den vertikala satsen
@@ -77,6 +73,7 @@ struct RecipesListView: View {
                         // OM receptet hittades, ska det bort från listan
                         if let index = indexFörReceptet {
                             recipes.remove(at: index)
+                            sparaReceptTillUserDefaults()
                         }
                     })
                     {
@@ -88,19 +85,53 @@ struct RecipesListView: View {
                             .cornerRadius(8)
                     }
                 }
-                
+            }
                 Spacer()//flyttar allt uppåt
             }
             .padding()//space "runt om" recept och knappar
             .navigationTitle(Text("Recept"))
+            .onAppear{
+                laddaReceptFrånUserDefaults()
+            }
+            
+        
+    
+}
+
+        //skapa funktioner?
+        //en ska kunna ta bort recpt ur listan OCH listan ska även sparas om. (userfedaults) borttagna recept ska ine komma tillbaka när appen startas om
+        
+        func sparaReceptTillUserDefaults() {
+            let encoder = JSONEncoder() // Skapar en JSONEncoder – används för att konvertera Swift-objekt till JSON-data
+            if let encodedData = try? encoder.encode(recipes) {
+                UserDefaults.standard.set(encodedData, forKey: "sparadeRecept")
+            }
         }
+        
+        //den andra ska kunna Läsa in sparade recept när appen starta För att visa användaren den senaste listan
+        func laddaReceptFrånUserDefaults() {
+            let decoder = JSONDecoder()
+            if let savedData = UserDefaults.standard.data(forKey: "sparadeRecept"),
+            let loadedRecipes = try? decoder.decode([Recipe].self, from: savedData) {
+                recipes = loadedRecipes
+            }
+            
+            else {
+            // Om inga sparade recept, skapa grundlistan
+            recipes = [
+            Recipe(id: UUID(), title: "Pizza", author: "Anna", description: "Tomat och ost"),
+            Recipe(id: UUID(), title: "Pasta", author: "Erik", description: "Med gräddsås"),
+            Recipe(id: UUID(), title: "Sallad", author: "Lina", description: "Fräsch och grön")
+            ]
+            sparaReceptTillUserDefaults()
+            }
     }
 }
 
 
 //gör en modell (recipe)
-
-struct Recipe: Identifiable {//Identifiable möjliggör att användning i ForEach
+//ForEach,konvertera en instans av Recipe till JSON-data respektive läsa in en instans av Recipe från JSON-data*
+struct Recipe: Identifiable, Encodable, Decodable {
     let id: UUID //ändrat från int till uuid
     let title: String
     let author: String
