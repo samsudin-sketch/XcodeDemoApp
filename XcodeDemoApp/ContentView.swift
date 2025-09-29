@@ -33,6 +33,7 @@ struct ContentView: View {
 struct RecipesListView: View {
     
     @State private var recipes: [Recipe] = [] //kör nu tom array i början istället
+    @State private var visaLäggTillFormulär = false
     
     var body: some View {
         VStack (spacing: 20){//space mellan sakerna i den vertikala satsen
@@ -90,12 +91,25 @@ struct RecipesListView: View {
             }
             .padding()//space "runt om" recept och knappar
             .navigationTitle(Text("Recept"))
+            
+            .toolbar {  //här i toolbar skapar vi ett plus som får formuläret att visas
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        visaLäggTillFormulär = true
+                    }) {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
             .onAppear{
                 laddaReceptFrånUserDefaults()
             }
             
-        
-    
+            //  när visaLäggTillFormulär sätts till true, visas ett formulär (LäggTillReceptFormulär); ny vy där man kan mata in titel, författare och beskrivning.
+            .sheet(isPresented: $visaLäggTillFormulär) {
+                LäggTillReceptFormulär(recipes: $recipes, sparaFunktion: sparaReceptTillUserDefaults)
+            }
+
 }
 
         //skapa funktioner?
@@ -127,6 +141,63 @@ struct RecipesListView: View {
             }
     }
 }
+
+
+struct LäggTillReceptFormulär: View {
+    @Environment(\.dismiss) var dismiss
+    
+    @Binding var recipes: [Recipe]               // recipes inte är en egen lokal lista, utan är direkt kopplad till listan i RecipesListView – alltså själva huvudlistan med recept
+    var sparaFunktion: () -> Void                // ← Funktion som sparar till UserDefaults
+    
+    // 1. Samlar in receptets data via State-variabler kopplade till formuläret
+    @State private var title = ""
+    @State private var author = ""
+    @State private var description = ""
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Titel")) {
+                    TextField("Ange titel", text: $title) // ← Data samlas här
+                }
+                Section(header: Text("Författare")) {
+                    TextField("Ange författare", text: $author)
+                }
+                Section(header: Text("Beskrivning")) {
+                    TextField("Ange beskrivning", text: $description)
+                }
+            }
+
+            .navigationTitle("Nytt recept")
+            .navigationBarItems(
+                
+                // "Avbryt"-knapp: stänger formuläret utan att spara
+                leading: Button("Avbryt") {
+                    dismiss()
+                },
+                
+                // 2. Här skapas ett nytt Recipe
+                // 3. Lägger till det i listan
+                // 4. Sparar till UserDefaults
+                trailing: Button("Spara") {
+                    let nyttRecept = Recipe(              // ← 2. Skapar nytt recept
+                        id: UUID(),
+                        title: title,
+                        author: author,
+                        description: description
+                    )
+                    
+                    recipes.append(nyttRecept)            /* ← 3. Funktionen append(...) lägger till ett nytt element sist i en array.Den tar objektet nyttRecept, och lägger det längst ner i listan recipes */
+                    sparaFunktion()                       // ← 4. Sparar till UserDefaults
+                    dismiss()                             // ← Stänger formuläret
+                }
+                // Spara-knappen är inaktiverad om något fält är tomt
+                .disabled(title.isEmpty || author.isEmpty || description.isEmpty)
+            )
+        }
+    }
+}
+
 
 
 //gör en modell (recipe)
