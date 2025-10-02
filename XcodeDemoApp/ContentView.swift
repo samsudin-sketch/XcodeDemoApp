@@ -42,10 +42,21 @@ struct RecipesListView: View {
                 .bold()
             
             ForEach(recipes) { recipe in            //kör koden inuti blocket för varje recept ("recipe" kan bytas ut mot godtyckligt ord)
+                let recipeBinding = Binding<Recipe>(
+                    get: {
+                        recipe
+                    },
+                    set: { updated in
+                        if let index = recipes.firstIndex(where: { $0.id == updated.id }) {
+                            recipes[index] = updated
+                        }
+                    }
+                )
+
                 VStack(alignment: .leading, spacing: 8) {
-                    
-                    NavigationLink(destination: RecipeDetailView( recipe: recipe)){
-                        VStack(alignment: .leading) {//.leading skjuter innehållet till vänster
+                    //raden nedan: När användaren trycker på denna länk, navigera till RecipeDetailView och skicka med hela recipes som en Binding, samt en vanlig (icke-binding) kopia av det valda receptet
+                    NavigationLink(destination: RecipeDetailView(recipes: $recipes, recipe: recipeBinding.wrappedValue)) {
+                        VStack(alignment: .leading) {
                             Text(recipe.title)
                                 .font(.headline)
                                 .foregroundColor(.white)
@@ -53,11 +64,11 @@ struct RecipesListView: View {
                                 .font(.subheadline)
                                 .foregroundColor(.white.opacity(0.8))
                         }
-                        .padding()//space mellan texten i knappen och knappens ytterkant
-                        .frame(maxWidth: .infinity, alignment: .leading) //knappbredd
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.blue)
-                        .cornerRadius(10)//rundar av hörnen
-                        .shadow(radius: 3) // skugga runt knappen
+                        .cornerRadius(10)
+                        .shadow(radius: 3)
                     }
                     
                     //knapp för receptborttagning
@@ -212,7 +223,11 @@ struct Recipe: Identifiable, Encodable, Decodable {
 
 //tredje vyn - RecipeDetailView som är en detaljvy
 struct RecipeDetailView: View {
-    let recipe: Recipe //En konstant variabel som är ett objekt av typen Recipe
+    @Binding var recipes: [Recipe]
+    let recipe: Recipe
+
+    @State private var visaRedigeraFormulär = false
+
     
     var body: some View {
         VStack (alignment: .leading, spacing: 10){
@@ -226,8 +241,81 @@ struct RecipeDetailView: View {
                 .padding(.top)//padding endast på en angiven sida
         }
         .navigationTitle("Detaljer")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Redigera") {
+                    visaRedigeraFormulär = true
+                }
+            }
+        }
+        .sheet(isPresented: $visaRedigeraFormulär) {
+            RedigeraReceptFormulär(
+                recipes: $recipes,
+                receptAttRedigera: recipe
+            )
+        }
+
     }
 }
+
+struct RedigeraReceptFormulär: View {
+    @Environment(\.dismiss) var dismiss
+
+    @Binding var recipes: [Recipe]
+    var receptAttRedigera: Recipe
+
+    @State private var title: String
+    @State private var author: String
+    @State private var description: String
+
+    init(recipes: Binding<[Recipe]>, receptAttRedigera: Recipe) {
+        _recipes = recipes
+        self.receptAttRedigera = receptAttRedigera
+        _title = State(initialValue: receptAttRedigera.title)
+        _author = State(initialValue: receptAttRedigera.author)
+        _description = State(initialValue: receptAttRedigera.description)
+    }
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Titel")) {
+                    TextField("Ange titel", text: $title)
+                }
+                Section(header: Text("Författare")) {
+                    TextField("Ange författare", text: $author)
+                }
+                Section(header: Text("Beskrivning")) {
+                    TextField("Ange beskrivning", text: $description)
+                }
+            }
+            .navigationTitle("Redigera Recept")
+            .navigationBarItems(
+                leading: Button("Avbryt") {
+                    dismiss()
+                },
+                trailing: Button("Spara") {
+                    if let index = recipes.firstIndex(where: { $0.id == receptAttRedigera.id }) {
+                        recipes[index] = Recipe(
+                            id: receptAttRedigera.id,
+                            title: title,
+                            author: author,
+                            description: description
+                        )
+                        // Spara ändrad lista
+                        let encoder = JSONEncoder()
+                        if let encodedData = try? encoder.encode(recipes) {
+                            UserDefaults.standard.set(encodedData, forKey: "sparadeRecept")
+                        }
+                    }
+                    dismiss()
+                }
+                .disabled(title.isEmpty || author.isEmpty || description.isEmpty)
+            )
+        }
+    }
+}
+
 
 
 #Preview {
